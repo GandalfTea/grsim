@@ -1,22 +1,26 @@
 
 import pygame
-from dataclasses import dataclass
 import math
 import numpy as np
 
+from OpenGL.GL  import *
+from OpenGL.GLU import *
+
+from dataclasses import dataclass
 
 class Viewer:
 
     def __init__(self, width, height):
 
-        self.DISPLAY_NODES = True
+        self.DISPLAY_VERTS = True
         self.DISPLAY_LINES = True
 
-        self.width = width
-        self.height = height
-        self.screen = pygame.display.set_mode((self.width, self.height))
+        self.res = (width, height)
+        self.screen = pygame.display.set_mode(self.res, pygame.DOUBLEBUF|pygame.OPENGL)
         pygame.display.set_caption('GRVisualiser')
-        self.screen.fill((0, 0, 0))
+
+        gluPerspective(45, (self.res[0]/self.res[1]), 0.1, 50.0)
+        glTranslatef(0.0, 0.0, -30)
 
         self.node_color = (0, 255, 255)
         self.line_color = (255, 255, 255)
@@ -27,27 +31,33 @@ class Viewer:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return
+                    pygame.quit()
+                    quit()
 
+            #x = glGetDoublev(GL_MODELVIEW_MATRIX)
+            glRotate(1, 45, 45, 45)
+            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             self.display()
-            #self.models["cube"].rotate_z(self.models["cube"].center, 0.01)
-            self.models['cube'].transform(rotmat(0.01))
+            #self.models['cube'].transform(rotmat(0.01))
             pygame.display.flip()
+            pygame.time.wait(10)
 
     def display(self):
         self.screen.fill((0, 0, 0))
         for model in self.models.values():
-            if self.DISPLAY_NODES:
+            if self.DISPLAY_VERTS:
                 for v in model.vert:
                     #print(v)
-                    pygame.draw.circle(self.screen, self.node_color,
-                                       (v[0], v[1]), self.node_size, 0)
+                    #pygame.draw.circle(self.screen, self.node_color, (v[0], v[1]), self.node_size, 0)
+                    glBegin(GL_POINTS)
+                        #glVertex3f()
+                    glEnd()
             if self.DISPLAY_LINES:
+                glBegin(GL_LINES)
                 for line in model.lines:
-                    pygame.draw.aaline(
-                        self.screen, self.line_color,
-                        (model.vert[line[0]][0], model.vert[line[0]][1]),
-                        (model.vert[line[1]][0], model.vert[line[1]][1]))
+                    for v in line:
+                        glVertex3fv(model.vert[v][:3].tolist())
+                glEnd()
 
     def addModel(self, name, model):
         self.models[name] = model
@@ -88,19 +98,18 @@ class Model:
 def rotmat(radians):
     c = np.cos(radians)
     s = np.sin(radians)
-    return np.array([[c, -s, s, 0], [s, c, -s, 0], [-s, s, c, 0], [0, 0, 0,
-                                                                   1]])
+    return np.array([[c, -s, s, 0], [s, c, -s, 0], [-s, s, c, 0], [0, 0, 0, 1]])
 
 
 if __name__ == "__main__":
     cube = Model()
-    cube.add_vert([[x, y, z] for x in (50, 250) for y in (50, 250)
-                   for z in (50, 250)])
+    cube.add_vert([[x, y, z] for x in (-1, 1) for y in (-1, 1)
+                   for z in (-1, 1)])
     cube.add_lines([(n, n + 4) for n in range(0, 4)])
     cube.add_lines([(n, n + 1) for n in range(0, 8, 2)])
     cube.add_lines([(n, n + 2) for n in (0, 1, 4, 5)])
 
-    v = Viewer(800, 800)
+    v = Viewer(1000, 1000)
     v.addModel("cube", cube)
     v.run()
 
