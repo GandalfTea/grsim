@@ -13,7 +13,7 @@ class Viewer:
     def __init__(self, width, height):
 
         self.DISPLAY_VERTS = True
-        self.DISPLAY_LINES = False 
+        self.DISPLAY_LINES = True 
 
         self.res = (width, height)
         self.screen = pygame.display.set_mode(self.res, pygame.DOUBLEBUF|pygame.OPENGL)
@@ -36,7 +36,7 @@ class Viewer:
                     quit()
 
             #x = glGetDoublev(GL_MODELVIEW_MATRIX)
-            glRotate(0.5, 0, 45, 0)
+            glRotate(0.1, 0, 45, 0)
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             self.display()
             #self.models['cube'].transform(rotmat(0.01))
@@ -46,11 +46,15 @@ class Viewer:
     def display(self):
         self.screen.fill((0, 0, 0))
         for model in self.models.values():
+            maxval = max(model.vert.tolist())[0]
             if self.DISPLAY_VERTS:
                 glEnable(GL_POINT_SMOOTH)
+                glPointSize(3)
                 glBegin(GL_POINTS)
                 for v in model.vert:
-                    #pygame.draw.circle(self.screen, self.node_color, (v[0], v[1]), self.node_size, 0)
+                    val = [abs(i) for i in v.tolist()]
+                    val = max(val)/maxval
+                    glColor3f(abs(val-1), abs(val-0.8), abs(val-0.8))
                     x, y, z = v[:3].tolist()
                     glVertex3d(x, y, z)
                 glEnd()
@@ -97,20 +101,22 @@ class Model:
         self.vert = np.dot(self.vert, mat)
 
 
-def rotmat(radians):
-    c = np.cos(radians)
-    s = np.sin(radians)
-    return np.array([[c, -s, s, 0], [s, c, -s, 0], [-s, s, c, 0], [0, 0, 0, 1]])
+def lattice(size):
+    size = size//2
+    lattice = Model()
+    lattice.add_vert([[x, y, z] for x in range(-size, size) for y in range(-size, size) for z in range(-size, size)])
+
+    #lattice.add_lines([(n, n + 4) for n in range(0, 4)])
+    #lattice.add_lines([(n, n + 1) for n in range(0, 8, 2)])
+    #lattice.add_lines([(n, n + 2) for n in (0, 1, 4, 5)])
+    return lattice
+
 
 
 if __name__ == "__main__":
-    cube = Model()
-    cube.add_vert([[x, y, z] for x in range(-4, 4) for y in range(-4, 4) for z in range(-4 ,4)])
-    cube.add_lines([(n, n + 4) for n in range(0, 4)])
-    cube.add_lines([(n, n + 1) for n in range(0, 8, 2)])
-    cube.add_lines([(n, n + 2) for n in (0, 1, 4, 5)])
 
-    v = Viewer(1000, 1000)
-    v.addModel("cube", cube)
+    l = lattice(8)
+    v = Viewer(1200, 1200)
+    v.addModel("lattice", l)
     v.run()
 
