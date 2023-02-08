@@ -13,7 +13,7 @@ class Viewer:
     def __init__(self, width, height):
 
         self.DISPLAY_VERTS = True
-        self.DISPLAY_LINES = True
+        self.DISPLAY_LINES = False 
 
         self.res = (width, height)
         self.screen = pygame.display.set_mode(self.res, pygame.DOUBLEBUF|pygame.OPENGL)
@@ -28,6 +28,7 @@ class Viewer:
         self.models = {}
 
     def run(self):
+        glRotate(20, 1, 0, 0)
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -35,7 +36,7 @@ class Viewer:
                     quit()
 
             #x = glGetDoublev(GL_MODELVIEW_MATRIX)
-            glRotate(1, 45, 45, 45)
+            glRotate(0.5, 0, 45, 0)
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             self.display()
             #self.models['cube'].transform(rotmat(0.01))
@@ -46,12 +47,13 @@ class Viewer:
         self.screen.fill((0, 0, 0))
         for model in self.models.values():
             if self.DISPLAY_VERTS:
+                glEnable(GL_POINT_SMOOTH)
+                glBegin(GL_POINTS)
                 for v in model.vert:
-                    #print(v)
                     #pygame.draw.circle(self.screen, self.node_color, (v[0], v[1]), self.node_size, 0)
-                    glBegin(GL_POINTS)
-                        #glVertex3f()
-                    glEnd()
+                    x, y, z = v[:3].tolist()
+                    glVertex3d(x, y, z)
+                glEnd()
             if self.DISPLAY_LINES:
                 glBegin(GL_LINES)
                 for line in model.lines:
@@ -103,8 +105,7 @@ def rotmat(radians):
 
 if __name__ == "__main__":
     cube = Model()
-    cube.add_vert([[x, y, z] for x in (-1, 1) for y in (-1, 1)
-                   for z in (-1, 1)])
+    cube.add_vert([[x, y, z] for x in range(-4, 4) for y in range(-4, 4) for z in range(-4 ,4)])
     cube.add_lines([(n, n + 4) for n in range(0, 4)])
     cube.add_lines([(n, n + 1) for n in range(0, 8, 2)])
     cube.add_lines([(n, n + 2) for n in (0, 1, 4, 5)])
