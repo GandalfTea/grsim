@@ -22,9 +22,6 @@ class Viewer:
         gluPerspective(45, (self.res[0]/self.res[1]), 0.1, 50.0)
         glTranslatef(0.0, 0.0, -30)
 
-        self.node_color = (0, 255, 255)
-        self.line_color = (255, 255, 255)
-        self.node_size = 2
         self.models = {}
 
     def run(self):
@@ -38,13 +35,13 @@ class Viewer:
             #x = glGetDoublev(GL_MODELVIEW_MATRIX)
             glRotate(0.1, 0, 45, 0)
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
+            glClearColor(0.05, 0.066, 0.09, 1)
             self.display()
             #self.models['cube'].transform(rotmat(0.01))
             pygame.display.flip()
             pygame.time.wait(10)
 
     def display(self):
-        self.screen.fill((0, 0, 0))
         for model in self.models.values():
             maxval = max(model.vert.tolist())[0]
             if self.DISPLAY_VERTS:
@@ -53,8 +50,8 @@ class Viewer:
                 glBegin(GL_POINTS)
                 for v in model.vert:
                     val = [abs(i) for i in v.tolist()]
-                    val = max(val)/maxval
-                    glColor3f(abs(val-1), abs(val-0.8), abs(val-0.8))
+                    val = (sum(val)/len(val))/maxval
+                    glColor3f(abs(val-0.3), abs(val-0.9), abs(val-0.9))
                     x, y, z = v[:3].tolist()
                     glVertex3d(x, y, z)
                 glEnd()
@@ -70,24 +67,13 @@ class Viewer:
 
 
 class Model:
-
     def __init__(self):
         self.vert = np.zeros((0, 4))
         self.lines = []
-        self.center = self._center()
 
     def _center(self):
         return (sum([v.x for v in self.vert]), sum([v.y for v in self.vert]),
                 sum([v.z for v in self.vert]))
-
-    def rotate_z(self, center, radians):
-        for v in self.vert:
-            x = v[0] - center[0]
-            y = v[1] - center[1]
-            d = math.hypot(y, x)
-            theta = math.atan2(y, x) + radians
-            v[0] = center[0] + d * math.cos(theta)
-            v[1] = center[1] + d * math.cos(theta)
 
     def add_vert(self, vert_array):
         ones_column = np.ones((len(vert_array), 1))
@@ -116,7 +102,8 @@ def lattice(size):
 if __name__ == "__main__":
 
     l = lattice(8)
-    v = Viewer(1200, 1200)
+    v = Viewer(1500, 1500)
+
     v.addModel("lattice", l)
     v.run()
 
