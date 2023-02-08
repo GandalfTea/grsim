@@ -46,7 +46,7 @@ class Viewer:
             maxval = max(model.vert.tolist())[0]
             if self.DISPLAY_VERTS:
                 glEnable(GL_POINT_SMOOTH)
-                glPointSize(3)
+                glPointSize(2)
                 glBegin(GL_POINTS)
                 for v in model.vert:
                     val = [abs(i) for i in v.tolist()]
